@@ -1,0 +1,612 @@
+:root {
+  color-scheme: dark;
+  --bg: #050303;
+  --panel: #110b0c;
+  --panel-strong: #1b1012;
+  --line: #332022;
+  --line-hot: #682025;
+  --text: #fff7f7;
+  --muted: #a89597;
+  --accent: #e20d18;
+  --accent-strong: #ff3d2e;
+  --blue: #ff5449;
+  --green: #4bd47b;
+  --warning: #f5b84b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(255, 61, 46, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 61, 46, 0.03) 1px, transparent 1px),
+    radial-gradient(circle at 14% -12%, rgba(255, 28, 42, 0.26), transparent 32%),
+    radial-gradient(circle at 86% 8%, rgba(255, 120, 50, 0.12), transparent 28%),
+    linear-gradient(180deg, #0b0506 0%, var(--bg) 52%);
+  background-size: 100% 100%, 42px 42px, 100% 100%, 100% 100%, 100% 100%;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.shell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 28px 0 40px;
+}
+
+.topbar,
+.panelHeader,
+.fileMain,
+.fileSide,
+.actions,
+.session,
+.toolbar,
+.fileActions {
+  display: flex;
+  align-items: center;
+}
+
+.topbar {
+  justify-content: space-between;
+  gap: 18px;
+  padding: 8px 0 24px;
+}
+
+.eyebrow {
+  margin: 0 0 5px;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 44px;
+  line-height: 1.02;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+h3 {
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.muted {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.notice {
+  min-height: 22px;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.notice.error {
+  color: #ff9ba0;
+}
+
+.notice.ok {
+  color: var(--green);
+}
+
+.gridInner,
+.keysGrid {
+  display: grid;
+  grid-template-columns: minmax(320px, 430px) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.grid {
+  display: grid;
+  gap: 18px;
+}
+
+.tabs {
+  display: inline-flex;
+  width: fit-content;
+  gap: 6px;
+  padding: 5px;
+  background: rgba(12, 7, 8, 0.88);
+  border: 1px solid var(--line-hot);
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.025);
+}
+
+.tabButton {
+  min-height: 38px;
+  padding: 0 18px;
+  color: var(--muted);
+  background: transparent;
+  border-radius: 6px;
+  font-weight: 900;
+}
+
+.tabButton.active {
+  color: var(--text);
+  background: linear-gradient(135deg, var(--accent), #8f1018);
+  box-shadow: 0 8px 26px rgba(226, 13, 24, 0.22);
+}
+
+.adminSection {
+  width: 100%;
+}
+
+.panel {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(38, 17, 19, 0.92), rgba(13, 8, 9, 0.96)),
+    var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-strong), transparent);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.narrow {
+  max-width: 460px;
+}
+
+.brandLockup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brandLockup img {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: #090506;
+  border: 1px solid rgba(255, 61, 46, 0.34);
+  padding: 7px;
+}
+
+.panelHeader {
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+.quickPanel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.presetList {
+  display: grid;
+  gap: 8px;
+}
+
+.presetItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.presetButton {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: 70px;
+  padding: 10px 12px;
+  color: var(--text);
+  text-align: left;
+  background: #100909;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.presetRemoveButton {
+  width: 78px;
+  min-height: 70px;
+  color: #ff9ea3;
+  background: #100909;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-weight: 900;
+}
+
+.presetButton:hover,
+.presetRemoveButton:hover {
+  border-color: var(--accent-strong);
+}
+
+.presetButton strong {
+  font-size: 14px;
+}
+
+.presetButton span,
+.presetButton small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.presetButton small {
+  color: #c8d7ea;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.presetRules {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.presetRuleButton {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 7px 8px;
+  color: var(--text);
+  text-align: left;
+  background: #0b0708;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.presetRuleButton:hover {
+  border-color: var(--accent-strong);
+}
+
+.presetRuleButton span {
+  color: #dce8f7;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.presetRuleButton b {
+  color: var(--accent-strong);
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  color: #cfd6df;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fieldHint {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  color: var(--text);
+  background: #0a0708;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 11px 12px;
+  outline: none;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 3px rgba(255, 61, 46, 0.18);
+}
+
+.primary,
+.ghost,
+.fileActions button {
+  min-height: 38px;
+  border-radius: 7px;
+  padding: 0 14px;
+  color: var(--text);
+  font-weight: 800;
+}
+
+.primary {
+  background: linear-gradient(135deg, var(--accent), #7e0c13);
+  box-shadow: 0 12px 28px rgba(226, 13, 24, 0.22);
+}
+
+.primary:hover {
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+}
+
+.loginActions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkboxLabel input {
+  width: auto;
+}
+
+.generatedKeys {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.generatedKeys pre {
+  max-height: 190px;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  color: #ffe5e7;
+  background: #090506;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ghost,
+.fileActions button {
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+}
+
+.ghost:hover,
+.fileActions button:hover {
+  border-color: #596574;
+}
+
+.session {
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.actions {
+  gap: 10px;
+}
+
+.toolbar {
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.toolbar input {
+  max-width: 340px;
+}
+
+.counter {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.fileList {
+  display: grid;
+  gap: 10px;
+}
+
+.fileCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(32, 13, 15, 0.95), rgba(9, 7, 8, 0.96));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.fileCard::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+
+.fileMain {
+  gap: 12px;
+  min-width: 0;
+}
+
+.fileIcon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: rgba(226, 13, 24, 0.16);
+  border: 1px solid rgba(255, 61, 46, 0.20);
+  color: var(--blue);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.fileMeta,
+.filePath,
+.fileHash {
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.filePath {
+  margin-top: 3px;
+  color: #ffd0d2;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.fileHash {
+  margin-top: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.fileSide {
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 6px;
+  padding: 0 8px;
+  background: rgba(75, 212, 123, 0.14);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.keyCard {
+  border-color: rgba(255, 61, 46, 0.28);
+}
+
+.keyCard .fileIcon {
+  color: #fff0f0;
+  background: linear-gradient(135deg, rgba(226, 13, 24, 0.38), rgba(255, 61, 46, 0.08));
+}
+
+.badge.pending {
+  background: rgba(245, 184, 75, 0.14);
+  color: var(--warning);
+}
+
+.badge.inactive {
+  background: rgba(149, 160, 173, 0.14);
+  color: var(--muted);
+}
+
+.fileActions {
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.deleteButton {
+  color: #ff9ba0 !important;
+}
+
+@media (max-width: 820px) {
+  h1 {
+    font-size: 34px;
+  }
+
+  .topbar,
+  .gridInner,
+  .keysGrid,
+  .fileCard {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .panelHeader,
+  .loginActions,
+  .toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .loginActions {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar input {
+    max-width: none;
+  }
+
+  .fileSide {
+    align-items: stretch;
+  }
+
+  .fileActions {
+    justify-content: stretch;
+  }
+
+  .fileActions button {
+    flex: 1 1 130px;
+  }
+}

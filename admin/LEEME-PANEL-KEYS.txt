@@ -1,0 +1,11 @@
+PANEL DE KEYS - NOVA X66
+
+1. Copia esta carpeta completa a la otra PC.
+2. Abre ABRIR-PANEL-KEYS.cmd.
+3. El navegador abrira http://127.0.0.1:3107/#keys en esa PC.
+4. Inicia sesion con un correo admin y crea las keys.
+
+Importante:
+- La otra PC necesita internet para conectarse a Supabase.
+- 127.0.0.1 siempre significa "esta misma PC"; no sirve abrir el 127.0.0.1 de tu PC desde la PC de tu amigo.
+- No compartas claves service_role. Este panel usa la publishable key y permisos admin de Supabase.

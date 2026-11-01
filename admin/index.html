@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <title>NOVA X66 Admin</title>
+    <link rel="stylesheet" href="./styles.css?v=20261019-la-cosa-nostra" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">NOVA X66</p>
+          <h1>Panel de archivos</h1>
+        </div>
+        <div class="session">
+          <span id="sessionEmail">Sin sesion</span>
+          <button id="signOutButton" class="ghost hidden" type="button">Salir</button>
+        </div>
+      </section>
+
+      <section id="loginPanel" class="panel narrow">
+        <div class="brandLockup">
+          <img src="./la-cosa-nostra-logo.png" alt="" />
+          <div>
+            <h2>Entrar al panel</h2>
+            <p class="muted">Administra keys y archivos publicados sin tocar la IPA.</p>
+          </div>
+        </div>
+        <p id="loginStatus" class="notice">Esperando correo y contrasena.</p>
+        <form id="loginForm" class="form">
+          <label>
+            Correo
+            <input id="emailInput" type="email" autocomplete="email" list="adminEmails" value="2008yashirchavez@gmail.com" required />
+          </label>
+          <datalist id="adminEmails">
+            <option value="2008yashirchavez@gmail.com"></option>
+            <option value="emmajestevex@gmail.com"></option>
+            <option value="grego23500@gmail.com"></option>
+          </datalist>
+          <label>
+            Contrasena
+            <input id="passwordInput" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="primary" type="submit">Entrar</button>
+          <div class="loginActions">
+            <button id="createAccessButton" class="ghost" type="button">Crear acceso</button>
+            <button id="resetPasswordButton" class="ghost" type="button">Recuperar contrasena</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="adminPanel" class="grid hidden">
+        <nav class="tabs" aria-label="Secciones del panel">
+          <button id="filesTabButton" class="tabButton active" type="button">Archivos</button>
+          <button id="keysTabButton" class="tabButton" type="button">Keys</button>
+        </nav>
+
+        <section id="filesSection" class="adminSection gridInner">
+        <aside class="panel">
+          <div class="panelHeader">
+            <div>
+              <h2 id="formTitle">Nuevo archivo</h2>
+              <p class="muted">Elige una plantilla o crea una ruta nueva.</p>
+            </div>
+            <button id="newButton" class="ghost" type="button">Nuevo</button>
+          </div>
+
+          <div class="quickPanel">
+            <h3>Archivos listos</h3>
+            <div id="presetList" class="presetList"></div>
+          </div>
+
+          <form id="fileForm" class="form">
+            <input id="editingId" type="hidden" />
+            <label>
+              Nombre visible
+              <input id="nameInput" type="text" maxlength="80" placeholder="Ej. Banner principal" required />
+            </label>
+            <label>
+              Slug
+              <input id="slugInput" type="text" maxlength="80" placeholder="banner-principal" required />
+            </label>
+            <label>
+              Categoria
+              <select id="categoryInput">
+                <option value="nova-patches">aimbots</option>
+                <option value="nova-shaders">visuales / shaders</option>
+                <option value="nova-configs">configs</option>
+                <option value="nova-packages">paquetes .3105</option>
+                <option value="nova-files">archivos sueltos</option>
+              </select>
+              <span class="fieldHint">Para que salga en Archivos y funcione como patch usa aimbots. Paquetes solo para archivos .3105.</span>
+            </label>
+            <label>
+              App destino
+              <select id="targetBundleInput">
+                <option value="com.dts.freefiremax">Free Fire Max - com.dts.freefiremax</option>
+                <option value="com.dts.freefireth">Free Fire normal - com.dts.freefireth</option>
+              </select>
+            </label>
+            <label id="assetVariantLabel" class="hidden">
+              Tipo de Asset Indexer
+              <select id="assetVariantInput">
+                <option value="pen">Asset PEN - FF Max</option>
+                <option value="h5">Asset U6 - FF Normal</option>
+              </select>
+              <span class="fieldHint">Si tu Free Fire es Max usa PEN. Si es normal usa U6. El panel cambia la ruta y la app destino automaticamente.</span>
+            </label>
+            <label>
+                Ruta en NOVA X66
+              <input id="targetPathInput" type="text" maxlength="180" placeholder="patches/mi-patch.bundle" required />
+              <span class="fieldHint">Elige la app destino y la ruta exacta. Con Nuevo se crea otro archivo; con Reemplazar se actualiza solo el elegido.</span>
+            </label>
+            <label>
+              Descripcion
+              <textarea id="descriptionInput" rows="3" placeholder="Nota interna opcional"></textarea>
+            </label>
+            <label>
+              Archivo nuevo o reemplazo
+              <input id="fileInput" type="file" required />
+            </label>
+            <button id="saveButton" class="primary" type="submit">Crear archivo nuevo</button>
+          </form>
+        </aside>
+
+        <section class="panel">
+          <div class="panelHeader">
+            <div>
+              <h2>Publicacion</h2>
+              <p id="statusText" class="muted">Cargando...</p>
+            </div>
+            <div class="actions">
+              <button id="refreshButton" class="ghost" type="button">Actualizar</button>
+              <button id="publishButton" class="primary" type="button">Publicar cambios</button>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <input id="searchInput" type="search" placeholder="Buscar archivo..." />
+            <span id="fileCounter" class="counter">0 archivos</span>
+          </div>
+
+          <div id="fileList" class="fileList"></div>
+        </section>
+        </section>
+
+        <section id="keysSection" class="adminSection keysGrid hidden">
+          <aside class="panel">
+            <div class="panelHeader">
+              <div>
+                <h2>Nueva key</h2>
+                <p class="muted">Crea keys para activar NOVA X66 en iPhone.</p>
+              </div>
+            </div>
+
+            <form id="keyForm" class="form">
+              <label>
+                Cantidad
+                <input id="keyQuantityInput" type="number" min="1" max="200" value="1" required />
+              </label>
+              <label>
+                Duracion en horas
+                <input id="keyDurationInput" type="number" min="0" placeholder="0 = sin vencimiento" />
+                <span class="fieldHint">Ejemplo: 24 para un dia, 168 para una semana. Vacio o 0 no vence.</span>
+              </label>
+              <label>
+                Etiqueta
+                <input id="keyLabelInput" type="text" maxlength="80" placeholder="Cliente / nota interna" />
+              </label>
+              <label>
+                Key personalizada
+                <input id="customKeyInput" type="text" maxlength="80" placeholder="Opcional: NOVA-CLIENTE-001" />
+                <span class="fieldHint">Si escribes una key personalizada, la cantidad debe ser 1.</span>
+              </label>
+              <label class="checkboxLabel">
+                <input id="specialAssetInput" type="checkbox" />
+                Acceso especial Asset Indexer
+              </label>
+              <button id="generateKeyButton" class="primary" type="submit">Crear key</button>
+            </form>
+
+            <div id="generatedKeysBox" class="generatedKeys hidden">
+              <h3>Keys creadas</h3>
+              <pre id="generatedKeysText"></pre>
+              <button id="copyGeneratedKeysButton" class="ghost" type="button">Copiar keys</button>
+            </div>
+          </aside>
+
+          <section class="panel">
+            <div class="panelHeader">
+              <div>
+                <h2>Keys activas</h2>
+                <p id="keyStatusText" class="muted">Cargando...</p>
+              </div>
+              <button id="refreshKeysButton" class="ghost" type="button">Actualizar</button>
+            </div>
+
+            <div class="toolbar">
+              <input id="keySearchInput" type="search" placeholder="Buscar key, estado o etiqueta..." />
+              <span id="keyCounter" class="counter">0 keys</span>
+            </div>
+
+            <div id="keyList" class="fileList"></div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <template id="fileTemplate">
+      <article class="fileCard">
+        <div class="fileMain">
+          <div class="fileIcon">FILE</div>
+          <div>
+            <h3></h3>
+            <p class="fileMeta"></p>
+            <p class="filePath"></p>
+            <p class="fileHash"></p>
+          </div>
+        </div>
+        <div class="fileSide">
+          <span class="badge"></span>
+          <div class="fileActions">
+            <button class="replaceButton" type="button">Reemplazar</button>
+            <button class="toggleButton" type="button"></button>
+            <button class="deleteButton" type="button">Eliminar</button>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <template id="keyTemplate">
+      <article class="fileCard keyCard">
+        <div class="fileMain">
+          <div class="fileIcon">KEY</div>
+          <div>
+            <h3></h3>
+            <p class="fileMeta"></p>
+            <p class="filePath"></p>
+            <p class="fileHash"></p>
+          </div>
+        </div>
+        <div class="fileSide">
+          <span class="badge"></span>
+          <div class="fileActions">
+            <button class="copyKeyButton" type="button">Copiar</button>
+            <button class="pauseKeyButton" type="button">Pausar</button>
+            <button class="blockKeyButton deleteButton" type="button">Bloquear</button>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script type="module" src="./app.js?v=20260923-target-help"></script>
+  </body>
+</html>
