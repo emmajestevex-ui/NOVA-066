@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Combine
 
 struct ContentView: View {
     @Environment(\.appLanguage) private var language
@@ -190,6 +191,8 @@ private struct DashboardView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     dashboardHero
 
+                    MembershipCardView()
+
                     VStack(alignment: .leading, spacing: 10) {
                         LCNSectionTitle("Archivos principales")
                         VStack(spacing: 0) {
@@ -293,6 +296,133 @@ private struct DashboardView: View {
         .background(LCNPanelBackground())
     }
 
+}
+
+private struct MembershipCardView: View {
+    @AppStorage("nova.license.key") private var licenseKey = ""
+    @AppStorage("nova.license.expiresAt") private var expiresAtRaw = ""
+    @State private var now = Date()
+    private let refreshTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(AppTheme.mint)
+                    .frame(width: 48, height: 48)
+                    .background(AppTheme.mint.opacity(0.16), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Membresía activa")
+                        .font(.title3.weight(.bold))
+                    Text("Acceso verificado a NOVA X66")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Text("PRO")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(AppTheme.mint)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(AppTheme.mint.opacity(0.16), in: Capsule())
+            }
+
+            Divider()
+
+            MembershipInfoRow(
+                icon: "key.fill",
+                title: "Clave",
+                value: maskedLicenseKey
+            )
+            MembershipInfoRow(
+                icon: "clock.fill",
+                title: "Estado",
+                value: expirationState,
+                tint: expirationDate.map { $0 > now ? AppTheme.mint : AppTheme.amber } ?? AppTheme.mint
+            )
+            MembershipInfoRow(
+                icon: "calendar",
+                title: "Expiración",
+                value: expirationText
+            )
+
+            if let date = expirationDate, date > now {
+                Text("Fecha exacta: \(date.formatted(date: .abbreviated, time: .omitted))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 36)
+            }
+        }
+        .padding(18)
+        .background(LCNPanelBackground())
+        .onReceive(refreshTimer) { value in
+            now = value
+        }
+    }
+
+    private var maskedLicenseKey: String {
+        let clean = licenseKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard clean.count > 8 else { return clean.isEmpty ? "No disponible" : clean }
+        return "\(clean.prefix(4))••••\(clean.suffix(4))"
+    }
+
+    private var expirationDate: Date? {
+        guard !expiresAtRaw.isEmpty else { return nil }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: expiresAtRaw) ?? ISO8601DateFormatter().date(from: expiresAtRaw)
+    }
+
+    private var expirationState: String {
+        guard let date = expirationDate else { return "Activa" }
+        return date > now ? "Activa" : "Vencida"
+    }
+
+    private var expirationText: String {
+        guard let date = expirationDate else { return "Sin fecha definida" }
+        let remainingDays = max(0, Int(ceil(date.timeIntervalSince(now) / 86_400)))
+        guard remainingDays > 0 else { return "Vencida" }
+        if remainingDays == 1 { return "Vence mañana" }
+        if remainingDays < 30 { return "Vence en \(remainingDays) días" }
+
+        let months = max(1, remainingDays / 30)
+        if months < 12 {
+            return months == 1 ? "Vence en 1 mes" : "Vence en \(months) meses"
+        }
+
+        let years = months / 12
+        return years == 1 ? "Vence en 1 año" : "Vence en \(years) años"
+    }
+}
+
+private struct MembershipInfoRow: View {
+    let icon: String
+    let title: String
+    let value: String
+    var tint: Color = AppTheme.accentGlow
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 24)
+
+            Text(title)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            Spacer(minLength: 12)
+
+            Text(value)
+                .font(.body.weight(.bold))
+                .multilineTextAlignment(.trailing)
+        }
+    }
 }
 
 private struct SocialHubView: View {
