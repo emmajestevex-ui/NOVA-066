@@ -443,7 +443,7 @@ private struct PatchProjectDetailView: View {
                                 systemImage: "checkmark.shield.fill"
                             )
                         }
-                        .buttonStyle(PatchPrimaryActionStyle())
+                        .buttonStyle(PatchPrimaryActionStyle(isApplied: receipt != nil))
                         .disabled(isWorking)
 
                         Button(role: .destructive, action: restore) {
@@ -453,9 +453,15 @@ private struct PatchProjectDetailView: View {
                                 systemImage: "arrow.uturn.backward.circle"
                             )
                         }
-                        .buttonStyle(PatchSecondaryActionStyle(isEnabled: receipt != nil && !isWorking))
+                        .buttonStyle(
+                            PatchSecondaryActionStyle(
+                                isEnabled: receipt != nil && !isWorking,
+                                isApplied: receipt != nil
+                            )
+                        )
                         .disabled(isWorking || receipt == nil)
                     }
+                    .animation(.easeInOut(duration: 0.25), value: receipt != nil)
                 }
                 .padding(.horizontal, AppTheme.pageInset)
                 .padding(.top, 16)
@@ -659,16 +665,22 @@ private struct PatchActionButtonContent: View {
 }
 
 private struct PatchPrimaryActionStyle: ButtonStyle {
+    let isApplied: Bool
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .foregroundStyle(.black)
+            .foregroundStyle(isApplied ? .white : .black)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: configuration.isPressed
-                                ? [AppTheme.accent.opacity(0.78), AppTheme.accentGlow.opacity(0.78)]
-                                : [AppTheme.accent, AppTheme.accentGlow],
+                            colors: isApplied
+                                ? (configuration.isPressed
+                                    ? [Color.green.opacity(0.78), AppTheme.mint.opacity(0.78)]
+                                    : [Color.green, AppTheme.mint])
+                                : (configuration.isPressed
+                                    ? [AppTheme.accent.opacity(0.78), AppTheme.accentGlow.opacity(0.78)]
+                                    : [AppTheme.accent, AppTheme.accentGlow]),
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -680,16 +692,28 @@ private struct PatchPrimaryActionStyle: ButtonStyle {
 
 private struct PatchSecondaryActionStyle: ButtonStyle {
     let isEnabled: Bool
+    let isApplied: Bool
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .foregroundStyle(isEnabled ? AppTheme.accentGlow : .secondary)
+            .foregroundStyle(isEnabled && isApplied ? Color.white : .secondary)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(AppTheme.accent.opacity(isEnabled ? (configuration.isPressed ? 0.18 : 0.10) : 0.035))
+                    .fill(
+                        isEnabled && isApplied
+                            ? (configuration.isPressed
+                                ? Color.red.opacity(0.78)
+                                : Color.red.opacity(0.92))
+                            : Color.gray.opacity(isEnabled ? 0.10 : 0.035)
+                    )
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(AppTheme.accentGlow.opacity(isEnabled ? 0.32 : 0.10), lineWidth: 1)
+                            .stroke(
+                                isEnabled && isApplied
+                                    ? Color.red.opacity(0.95)
+                                    : Color.gray.opacity(isEnabled ? 0.32 : 0.10),
+                                lineWidth: 1
+                            )
                     )
             )
             .scaleEffect(configuration.isPressed && isEnabled ? 0.985 : 1)
