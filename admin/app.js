@@ -1,9 +1,10 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { inspect3105Package } from "./package-inspector.js";
 
 const SUPABASE_URL = "https://jtxuhqpdolsyrojfqcjy.supabase.co";
 const SUPABASE_KEY = "sb_publishable_liqbgZZwGfp8ZegWE-BZ3g_yOP9ynYo";
 const BUCKET = "nova-content";
-const SCRIPT_VERSION = "20260923-target-help";
+const SCRIPT_VERSION = "20261106-3105-packages";
 const CLIENT_PREFIX = "nova-";
 const LICENSE_PREFIX = "NOVA-";
 const DEFAULT_TARGET_BUNDLE = "com.dts.freefireth";
@@ -236,9 +237,28 @@ const els = {
   fileList: $("#fileList"),
   fileTemplate: $("#fileTemplate"),
   filesTabButton: $("#filesTabButton"),
+  packagesTabButton: $("#packagesTabButton"),
   keysTabButton: $("#keysTabButton"),
   filesSection: $("#filesSection"),
+  packagesSection: $("#packagesSection"),
   keysSection: $("#keysSection"),
+  packageForm: $("#packageForm"),
+  packageEditingId: $("#packageEditingId"),
+  packageNameInput: $("#packageNameInput"),
+  packageSlugInput: $("#packageSlugInput"),
+  packageBundleInput: $("#packageBundleInput"),
+  packageDescriptionInput: $("#packageDescriptionInput"),
+  packageFileInput: $("#packageFileInput"),
+  packageInspectStatus: $("#packageInspectStatus"),
+  packageInspectDetails: $("#packageInspectDetails"),
+  savePackageButton: $("#savePackageButton"),
+  newPackageButton: $("#newPackageButton"),
+  refreshPackagesButton: $("#refreshPackagesButton"),
+  publishPackagesButton: $("#publishPackagesButton"),
+  packageSearchInput: $("#packageSearchInput"),
+  packageCounter: $("#packageCounter"),
+  packageStatusText: $("#packageStatusText"),
+  packageList: $("#packageList"),
   keyForm: $("#keyForm"),
   keyQuantityInput: $("#keyQuantityInput"),
   keyDurationInput: $("#keyDurationInput"),
@@ -300,7 +320,23 @@ function bindEvents() {
   els.publishButton.addEventListener("click", publishChanges);
   els.searchInput.addEventListener("input", renderFiles);
   els.filesTabButton.addEventListener("click", () => switchSection("files"));
+  els.packagesTabButton.addEventListener("click", () => switchSection("packages"));
   els.keysTabButton.addEventListener("click", () => switchSection("keys"));
+  els.packageForm.addEventListener("submit", savePackage);
+  els.newPackageButton.addEventListener("click", resetPackageForm);
+  els.refreshPackagesButton.addEventListener("click", loadFiles);
+  els.publishPackagesButton.addEventListener("click", publishChanges);
+  els.packageSearchInput.addEventListener("input", renderPackages);
+  els.packageFileInput.addEventListener("change", inspectSelectedPackage);
+  els.packageNameInput.addEventListener("input", () => {
+    if (!els.packageEditingId.value && !els.packageSlugInput.dataset.touched) {
+      els.packageSlugInput.value = safeSlug(els.packageNameInput.value);
+    }
+  });
+  els.packageSlugInput.addEventListener("input", () => {
+    els.packageSlugInput.dataset.touched = "true";
+    els.packageSlugInput.value = safeSlug(els.packageSlugInput.value);
+  });
   els.keyForm.addEventListener("submit", generateKeys);
   els.refreshKeysButton.addEventListener("click", loadKeys);
   els.keySearchInput.addEventListener("input", renderKeys);
@@ -460,13 +496,17 @@ function setSession(session) {
 
   if (signedIn) {
     setLoginStatus("Sesion iniciada.", false, true);
-    switchSection(window.location.hash === "#keys" ? "keys" : state.activeSection);
+    const requestedSection = ["files", "packages", "keys"].includes(window.location.hash.slice(1))
+      ? window.location.hash.slice(1)
+      : state.activeSection;
+    switchSection(requestedSection);
     loadFiles();
     loadKeys();
   } else {
     state.files = [];
     state.keys = [];
     renderFiles();
+    renderPackages();
     renderKeys();
   }
 }
@@ -476,12 +516,17 @@ function switchSection(section) {
   if (window.location.hash !== `#${section}`) {
     history.replaceState(null, "", `#${section}`);
   }
+  const showFiles = section === "files";
+  const showPackages = section === "packages";
   const showKeys = section === "keys";
-  els.filesSection.classList.toggle("hidden", showKeys);
+  els.filesSection.classList.toggle("hidden", !showFiles);
+  els.packagesSection.classList.toggle("hidden", !showPackages);
   els.keysSection.classList.toggle("hidden", !showKeys);
-  els.filesTabButton.classList.toggle("active", !showKeys);
+  els.filesTabButton.classList.toggle("active", showFiles);
+  els.packagesTabButton.classList.toggle("active", showPackages);
   els.keysTabButton.classList.toggle("active", showKeys);
   if (showKeys) loadKeys();
+  if (showPackages) renderPackages();
 }
 
 async function loadFiles() {
@@ -492,14 +537,17 @@ async function loadFiles() {
 
   if (error) {
     setStatus(adminErrorMessage(error));
+    setPackageStatus(adminErrorMessage(error));
     state.files = [];
     renderFiles();
+    renderPackages();
     return;
   }
 
   state.files = (data ?? []).filter(isLCNFile);
   setStatus("Listo. Recuerda publicar para que los iPhone reciban los cambios.");
   renderFiles();
+  renderPackages();
 }
 
 async function saveFile(event) {
@@ -586,6 +634,252 @@ async function saveFile(event) {
   } finally {
     setBusy(false);
   }
+}
+
+async function inspectSelectedPackage() {
+  const file = els.packageFileInput.files?.[0];
+  resetPackageInspection();
+  if (!file) return;
+
+  if (!file.name.toLowerCase().endsWith(".3105")) {
+    setPackageInspectionError("Selecciona un archivo con extensión .3105.");
+    return;
+  }
+
+  setPackageStatus("Verificando el paquete...");
+  els.packageInspectStatus.textContent = "Leyendo estructura, cifrado y patches...";
+  try {
+    const inspection = await inspect3105Package(file);
+    if (inspection.passwordProtected) {
+      setPackageInspectionError("Este paquete tiene contraseña. Expórtalo sin contraseña para que NOVA lo instale automáticamente.");
+      return;
+    }
+    showPackageInspection(inspection);
+    if (!els.packageNameInput.value.trim()) {
+      els.packageNameInput.value = inspection.projectName || file.name.replace(/\.3105$/i, "");
+    }
+    if (!els.packageSlugInput.value.trim()) {
+      els.packageSlugInput.value = safeSlug(inspection.projectName || file.name.replace(/\.3105$/i, ""));
+    }
+    const bundle = inspection.bundleIdentifiers.find((value) => value === FREE_FIRE_MAX_BUNDLE)
+      || inspection.bundleIdentifiers.find((value) => value === DEFAULT_TARGET_BUNDLE);
+    if (bundle) els.packageBundleInput.value = bundle;
+    setPackageStatus("Paquete verificado. Puedes subirlo y luego publicar los cambios.");
+  } catch (error) {
+    setPackageInspectionError(error?.message || "No se pudo leer el paquete .3105.");
+  }
+}
+
+async function savePackage(event) {
+  event.preventDefault();
+  if (!state.session || state.busy) return;
+
+  const file = els.packageFileInput.files?.[0];
+  if (!file) {
+    setPackageInspectionError("Selecciona un archivo .3105.");
+    return;
+  }
+
+  const name = els.packageNameInput.value.trim();
+  const slug = safeSlug(els.packageSlugInput.value || name);
+  if (!name || !slug) {
+    setPackageInspectionError("Completa el nombre y el slug del paquete.");
+    return;
+  }
+  if (!file.name.toLowerCase().endsWith(".3105")) {
+    setPackageInspectionError("El apartado de paquetes solo acepta archivos .3105.");
+    return;
+  }
+
+  setBusy(true, "Verificando paquete .3105...");
+  let uploadedPath = "";
+  try {
+    const inspection = await inspect3105Package(file);
+    if (inspection.passwordProtected) {
+      throw new Error("Este .3105 tiene contraseña. Expórtalo sin contraseña para que la app pueda instalarlo al sincronizar.");
+    }
+
+    const metadata = packageMetadata(inspection);
+    const userDescription = els.packageDescriptionInput.value.trim();
+    const description = [metadata, userDescription].filter(Boolean).join("\n");
+    const storagePath = `content/${crypto.randomUUID()}/${safeStorageFileName(file.name)}`;
+
+    setPackageStatus(`Subiendo paquete con ${packageCountLabel(inspection.patchCount)}...`);
+    const { error: uploadError } = await supabaseClient.storage
+      .from(BUCKET)
+      .upload(storagePath, file, {
+        cacheControl: "3600",
+        contentType: "application/octet-stream",
+        upsert: true,
+      });
+    if (uploadError) throw uploadError;
+    uploadedPath = storagePath;
+
+    setPackageStatus("Guardando el paquete en NOVA...");
+    const { error: rpcError } = await supabaseClient.rpc("admin_upsert_remote_content_file", {
+      p_id: els.packageEditingId.value || null,
+      p_name: name,
+      p_slug: slug,
+      p_category: "nova-packages",
+      p_target_bundle: safeTargetBundle(els.packageBundleInput.value),
+      p_target_path: `nova-packages/${safeFileName(`${slug}.3105`)}`,
+      p_description: description || null,
+      p_file_name: file.name,
+      p_mime_type: "application/octet-stream",
+      p_byte_size: file.size,
+      p_sha256: await sha256Hex(file),
+      p_storage_path: storagePath,
+      p_force_new: !els.packageEditingId.value,
+    });
+    if (rpcError) {
+      if (uploadedPath) await supabaseClient.storage.from(BUCKET).remove([uploadedPath]).catch(() => {});
+      throw rpcError;
+    }
+
+    resetPackageForm();
+    await loadFiles();
+    setPackageStatus("Paquete guardado. Pulsa Publicar cambios para que la app lo descargue al sincronizar.");
+  } catch (error) {
+    const message = adminErrorMessage(error);
+    setPackageStatus(message);
+    setPackageInspectionError(message);
+    window.alert(message);
+  } finally {
+    setBusy(false);
+  }
+}
+
+function resetPackageForm() {
+  els.packageForm.reset();
+  els.packageEditingId.value = "";
+  delete els.packageSlugInput.dataset.touched;
+  els.packageBundleInput.value = DEFAULT_TARGET_BUNDLE;
+  els.savePackageButton.textContent = "Subir paquete .3105";
+  resetPackageInspection();
+  setPackageStatus("Selecciona un .3105 para verificarlo.");
+}
+
+function editPackage(file) {
+  els.packageEditingId.value = file.id;
+  els.packageNameInput.value = file.name || "";
+  els.packageSlugInput.value = file.slug || "";
+  els.packageSlugInput.dataset.touched = "true";
+  els.packageBundleInput.value = safeTargetBundle(file.target_bundle);
+  els.packageDescriptionInput.value = packageUserDescription(file.description);
+  els.packageFileInput.value = "";
+  els.savePackageButton.textContent = "Reemplazar paquete .3105";
+  const metadata = parsePackageMetadata(file.description);
+  if (metadata) showPackageInspection(metadata);
+  setPackageStatus(`Reemplazando ${file.name}. Selecciona el nuevo .3105 y guarda.`);
+  els.packageNameInput.focus();
+}
+
+function renderPackages() {
+  if (!els.packageList) return;
+  const query = els.packageSearchInput.value.trim().toLowerCase();
+  const packages = state.files.filter((file) => {
+    if (!isPackageFile(file)) return false;
+    if (!query) return true;
+    return [file.name, file.slug, file.file_name, file.target_bundle, file.description]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(query));
+  });
+
+  els.packageList.replaceChildren();
+  els.packageCounter.textContent = `${packages.length} ${packages.length === 1 ? "paquete" : "paquetes"}`;
+  if (!packages.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = state.files.some(isPackageFile)
+      ? "No hay paquetes con esa búsqueda."
+      : "Todavía no hay paquetes .3105 publicados.";
+    els.packageList.append(empty);
+    return;
+  }
+
+  for (const file of packages) {
+    const node = els.fileTemplate.content.firstElementChild.cloneNode(true);
+    const metadata = parsePackageMetadata(file.description);
+    const count = metadata?.patchCount;
+    node.querySelector(".fileIcon").textContent = "3105";
+    node.querySelector("h3").textContent = file.name;
+    node.querySelector(".fileMeta").textContent = [
+      count ? packageCountLabel(count) : "Paquete .3105",
+      `v${file.version}`,
+      file.target_bundle || DEFAULT_TARGET_BUNDLE,
+      file.file_name,
+      formatBytes(file.byte_size),
+    ].join(" / ");
+    node.querySelector(".filePath").textContent = count
+      ? `Contenido detectado: ${packageCountLabel(count)}`
+      : "Contenido detectado: revisa el paquete al reemplazarlo";
+    node.querySelector(".fileHash").textContent = file.sha256;
+
+    const badge = node.querySelector(".badge");
+    badge.textContent = badgeLabel(file);
+    badge.classList.toggle("pending", file.sync_state !== "published");
+    badge.classList.toggle("inactive", !file.is_active || file.deleted_at);
+    node.querySelector(".toggleButton").textContent = file.is_active ? "Desactivar" : "Activar";
+    node.querySelector(".toggleButton").addEventListener("click", () => toggleActive(file));
+    node.querySelector(".replaceButton").addEventListener("click", () => editPackage(file));
+    node.querySelector(".deleteButton").addEventListener("click", () => deleteFile(file));
+    els.packageList.append(node);
+  }
+}
+
+function isPackageFile(file) {
+  return lcnCategory(file?.category) === "nova-packages"
+    || String(file?.file_name || "").toLowerCase().endsWith(".3105");
+}
+
+function packageMetadata(inspection) {
+  return `[NOVA-3105] patches=${inspection.patchCount}; schema=${inspection.schemaVersion}; package_id=${inspection.packageID}; bundles=${inspection.bundleIdentifiers.join(",")}`;
+}
+
+function parsePackageMetadata(description) {
+  const match = String(description || "").match(/\[NOVA-3105\]\s+patches=(\d+);\s*schema=(\d+);\s*package_id=([^;]+);\s*bundles=([^\n]*)/i);
+  if (!match) return null;
+  return {
+    patchCount: Number(match[1]),
+    schemaVersion: Number(match[2]),
+    packageID: match[3].trim(),
+    bundleIdentifiers: match[4].split(",").map((value) => value.trim()).filter(Boolean),
+  };
+}
+
+function packageUserDescription(description) {
+  return String(description || "").replace(/^\[NOVA-3105\].*(?:\r?\n|$)/i, "").trim();
+}
+
+function packageCountLabel(count) {
+  const amount = Number(count || 0);
+  return `${amount} ${amount === 1 ? "patch" : "patches"}`;
+}
+
+function resetPackageInspection() {
+  els.packageInspectStatus.textContent = "Selecciona un .3105 para verificarlo.";
+  els.packageInspectStatus.className = "muted";
+  els.packageInspectDetails.replaceChildren();
+  els.packageInspectDetails.classList.add("hidden");
+}
+
+function setPackageInspectionError(message) {
+  els.packageInspectStatus.textContent = message;
+  els.packageInspectStatus.className = "notice error";
+  els.packageInspectDetails.replaceChildren();
+  els.packageInspectDetails.classList.add("hidden");
+  setPackageStatus(message);
+}
+
+function showPackageInspection(inspection) {
+  els.packageInspectStatus.textContent = `Paquete válido: ${packageCountLabel(inspection.patchCount)} detectados.`;
+  els.packageInspectStatus.className = "notice ok";
+  els.packageInspectDetails.innerHTML = `
+    <dt>Proyecto</dt><dd>${escapeHTML(inspection.projectName || "Sin nombre")}</dd>
+    <dt>Versión</dt><dd>schema ${escapeHTML(inspection.schemaVersion)}</dd>
+    <dt>Apps internas</dt><dd>${escapeHTML(inspection.bundleIdentifiers.join(", ") || "No indicadas")}</dd>
+  `;
+  els.packageInspectDetails.classList.remove("hidden");
 }
 
 async function toggleActive(file) {
@@ -986,6 +1280,7 @@ function renderPresets() {
 function renderFiles() {
   const query = els.searchInput.value.trim().toLowerCase();
   const files = state.files.filter((file) => {
+    if (isPackageFile(file)) return false;
     if (!query) return true;
     return [file.name, file.slug, file.file_name, file.target_bundle, file.target_path, file.category, file.description]
       .filter(Boolean)
@@ -1151,6 +1446,10 @@ function setStatus(message) {
   if (!state.session) {
     setLoginStatus(message);
   }
+}
+
+function setPackageStatus(message) {
+  if (els.packageStatusText) els.packageStatusText.textContent = message;
 }
 
 function setKeyStatus(message) {

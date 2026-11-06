@@ -329,7 +329,7 @@ enum BundledPatchSeeder {
         guard let manifest = RemoteContentLibrary.loadManifest(fileManager: fileManager) else { return }
         let groupedRemoteIDs = Set(manifest.files.compactMap { file -> UUID? in
             guard file.isAvailable, isBuiltInRemoteFile(file) else { return nil }
-            return remoteProjectID(for: file)
+            return remoteProjectID(for: file, fileManager: fileManager)
         })
         guard !groupedRemoteIDs.isEmpty else { return }
 
@@ -499,7 +499,7 @@ enum BundledPatchSeeder {
         let existingItems = PatchProjectLibrary.load(fileManager: fileManager)
 
         for file in remoteFiles {
-            guard let projectID = remoteProjectID(for: file),
+            guard let projectID = remoteProjectID(for: file, fileManager: fileManager),
                   let payloadURL = RemoteContentLibrary.localFileURL(for: file, fileManager: fileManager) else {
                 continue
             }
@@ -596,7 +596,9 @@ enum BundledPatchSeeder {
     }
 
     private static func remoteProjectIDs(fileManager: FileManager = .default) -> Set<UUID> {
-        Set(standaloneRemotePatchFiles(fileManager: fileManager).compactMap(remoteProjectID))
+        Set(standaloneRemotePatchFiles(fileManager: fileManager).compactMap {
+            remoteProjectID(for: $0, fileManager: fileManager)
+        })
     }
 
     private static func sortedRemoteProjectIDs(fileManager: FileManager = .default) -> [UUID] {
@@ -610,7 +612,7 @@ enum BundledPatchSeeder {
                 if leftPublishedAt != rightPublishedAt { return leftPublishedAt < rightPublishedAt }
                 return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
             }
-            .compactMap(remoteProjectID)
+            .compactMap { remoteProjectID(for: $0, fileManager: fileManager) }
     }
 
     private static func standaloneRemotePatchFiles(fileManager: FileManager) -> [RemoteContentFile] {
@@ -622,12 +624,21 @@ enum BundledPatchSeeder {
         } ?? []
     }
 
-    private static func remoteProjectID(for file: RemoteContentFile) -> UUID? {
+    private static func remoteProjectID(
+        for file: RemoteContentFile,
+        fileManager: FileManager = .default
+    ) -> UUID? {
+        if isRemotePatchPackage(file),
+           let localURL = RemoteContentLibrary.localFileURL(for: file, fileManager: fileManager),
+           let data = try? PatchProjectLibrary.readPackage(at: localURL),
+           let summary = try? PatchPackageCodec.inspect(data) {
+            return summary.packageID
+        }
         UUID(uuidString: file.id)
     }
 
     private static func isRemotePatchPackage(_ file: RemoteContentFile) -> Bool {
-        file.category.lowercased() == "packages"
+        ["packages", "nova-packages"].contains(file.category.lowercased())
             || file.fileName.lowercased().hasSuffix(".3105")
             || file.mimeType?.lowercased() == "application/vnd.greeg.3105"
     }

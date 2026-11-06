@@ -54,6 +54,7 @@
       <section id="adminPanel" class="grid hidden">
         <nav class="tabs" aria-label="Secciones del panel">
           <button id="filesTabButton" class="tabButton active" type="button">Archivos</button>
+          <button id="packagesTabButton" class="tabButton" type="button">Paquetes .3105</button>
           <button id="keysTabButton" class="tabButton" type="button">Keys</button>
         </nav>
 
@@ -144,6 +145,71 @@
 
           <div id="fileList" class="fileList"></div>
         </section>
+        </section>
+
+        <section id="packagesSection" class="adminSection gridInner hidden">
+          <aside class="panel">
+            <div class="panelHeader">
+              <div>
+                <h2>Nuevo paquete .3105</h2>
+                <p class="muted">Sube el paquete exportado y revisa cuántos patches trae antes de publicarlo.</p>
+              </div>
+              <button id="newPackageButton" class="ghost" type="button">Nuevo</button>
+            </div>
+
+            <form id="packageForm" class="form">
+              <input id="packageEditingId" type="hidden" />
+              <label>
+                Nombre visible
+                <input id="packageNameInput" type="text" maxlength="80" placeholder="Ej. Drag + Holo" required />
+              </label>
+              <label>
+                Slug
+                <input id="packageSlugInput" type="text" maxlength="80" placeholder="drag-holo" required />
+              </label>
+              <label>
+                App de referencia
+                <select id="packageBundleInput">
+                  <option value="com.dts.freefireth">Free Fire normal - com.dts.freefireth</option>
+                  <option value="com.dts.freefiremax">Free Fire Max - com.dts.freefiremax</option>
+                </select>
+                <span class="fieldHint">El paquete conserva sus apps y rutas internas. Esta opción solo identifica el destino en el panel.</span>
+              </label>
+              <label>
+                Descripción
+                <textarea id="packageDescriptionInput" rows="3" placeholder="Nota interna opcional"></textarea>
+              </label>
+              <label>
+                Archivo .3105 exportado
+                <input id="packageFileInput" type="file" accept=".3105,application/octet-stream" required />
+                <span class="fieldHint">Debe estar exportado sin contraseña para que NOVA lo pueda instalar automáticamente después de sincronizar.</span>
+              </label>
+              <div id="packageInspectBox" class="packageInspectBox" aria-live="polite">
+                <strong>Inspector de paquete</strong>
+                <p id="packageInspectStatus" class="muted">Selecciona un .3105 para verificarlo.</p>
+                <dl id="packageInspectDetails" class="packageInspectDetails hidden"></dl>
+              </div>
+              <button id="savePackageButton" class="primary" type="submit">Subir paquete .3105</button>
+            </form>
+          </aside>
+
+          <section class="panel">
+            <div class="panelHeader">
+              <div>
+                <h2>Paquetes publicados</h2>
+                <p id="packageStatusText" class="muted">Cargando...</p>
+              </div>
+              <div class="actions">
+                <button id="refreshPackagesButton" class="ghost" type="button">Actualizar</button>
+                <button id="publishPackagesButton" class="primary" type="button">Publicar cambios</button>
+              </div>
+            </div>
+            <div class="toolbar">
+              <input id="packageSearchInput" type="search" placeholder="Buscar paquete..." />
+              <span id="packageCounter" class="counter">0 paquetes</span>
+            </div>
+            <div id="packageList" class="fileList"></div>
+          </section>
         </section>
 
         <section id="keysSection" class="adminSection keysGrid hidden">
@@ -252,6 +318,6 @@
       </article>
     </template>
 
-    <script type="module" src="./app.js?v=20260923-target-help"></script>
+    <script type="module" src="./app.js?v=20261106-3105-packages"></script>
   </body>
 </html>

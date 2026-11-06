@@ -139,6 +139,7 @@ h3 {
 
 .tabs {
   display: inline-flex;
+  flex-wrap: wrap;
   width: fit-content;
   gap: 6px;
   padding: 5px;
@@ -408,6 +409,39 @@ textarea:focus {
   border-radius: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.packageInspectBox {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(226, 13, 24, 0.08);
+  border: 1px solid rgba(255, 61, 46, 0.28);
+  border-radius: 8px;
+}
+
+.packageInspectBox > strong {
+  color: #ffdfe1;
+  font-size: 13px;
+}
+
+.packageInspectDetails {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 5px 10px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.packageInspectDetails dt {
+  color: #ffd0d2;
+  font-weight: 800;
+}
+
+.packageInspectDetails dd {
+  margin: 0;
   overflow-wrap: anywhere;
 }
 
