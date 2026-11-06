@@ -634,7 +634,7 @@ enum BundledPatchSeeder {
            let summary = try? PatchPackageCodec.inspect(data) {
             return summary.packageID
         }
-        UUID(uuidString: file.id)
+        return UUID(uuidString: file.id)
     }
 
     private static func isRemotePatchPackage(_ file: RemoteContentFile) -> Bool {
